@@ -1,0 +1,41 @@
+{
+  "name": "mismo-dj-controller-server",
+  "version": "0.1.0",
+  "description": "Unified MIDI and HID device handling for DJ controller hardware",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js test/unit",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js test/integration",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  },
+  "keywords": [
+    "dj",
+    "controller",
+    "midi",
+    "hid",
+    "mismo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "easymidi": "^3.0.1",
+    "node-hid": "^3.1.0",
+    "ws": "^8.16.0",
+    "dotenv": "^16.4.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.56.0",
+    "nodemon": "^3.0.3"
+  }
+}

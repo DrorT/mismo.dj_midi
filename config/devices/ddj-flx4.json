@@ -1,0 +1,50 @@
+{
+  "device": {
+    "name": "Pioneer DDJ-FLX4",
+    "protocol": "midi",
+    "vendor": "Pioneer",
+    "product": "DDJ-FLX4"
+  },
+  "mappings": {
+    "volume_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 19,
+        "highRes": true,
+        "lsb": 51
+      },
+      "action": {
+        "type": "mixer",
+        "command": "volume",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit high-resolution fader (CC 19 MSB + CC 51 LSB)"
+    },
+    "volume_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 51,
+        "highRes": true,
+        "lsb": 83
+      },
+      "action": {
+        "type": "mixer",
+        "command": "volume",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit high-resolution fader (CC 51 MSB + CC 83 LSB) - VERIFY THIS"
+    }
+  },
+  "_notes": [
+    "This is a partial mapping for the Pioneer DDJ-FLX4",
+    "Volume faders use 14-bit MIDI for ultra-smooth control",
+    "Run 'node test/manual/listen-midi-events.js' to find other controls",
+    "The jog wheels use HID (not MIDI) - coming in Phase 2"
+  ]
+}

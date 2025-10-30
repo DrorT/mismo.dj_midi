@@ -1,0 +1,268 @@
+{
+  "device": {
+    "name": "Generic MIDI Controller",
+    "protocol": "midi",
+    "vendor": "*",
+    "product": "*"
+  },
+  "mappings": {
+    "play_a": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 11
+      },
+      "action": {
+        "type": "transport",
+        "command": "play",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": {
+        "type": "led",
+        "midiOut": {
+          "type": "noteon",
+          "channel": 0,
+          "note": 11
+        },
+        "stateMap": {
+          "playing": 127,
+          "stopped": 0
+        }
+      }
+    },
+    "play_b": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 12
+      },
+      "action": {
+        "type": "transport",
+        "command": "play",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": {
+        "type": "led",
+        "midiOut": {
+          "type": "noteon",
+          "channel": 0,
+          "note": 12
+        },
+        "stateMap": {
+          "playing": 127,
+          "stopped": 0
+        }
+      }
+    },
+    "cue_a": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 13
+      },
+      "action": {
+        "type": "transport",
+        "command": "cue",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": {
+        "type": "led",
+        "midiOut": {
+          "type": "noteon",
+          "channel": 0,
+          "note": 13
+        },
+        "stateMap": {
+          "cued": 127,
+          "stopped": 0
+        }
+      }
+    },
+    "cue_b": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 14
+      },
+      "action": {
+        "type": "transport",
+        "command": "cue",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": {
+        "type": "led",
+        "midiOut": {
+          "type": "noteon",
+          "channel": 0,
+          "note": 14
+        },
+        "stateMap": {
+          "cued": 127,
+          "stopped": 0
+        }
+      }
+    },
+    "sync_a": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 15
+      },
+      "action": {
+        "type": "transport",
+        "command": "sync",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": {
+        "type": "led",
+        "midiOut": {
+          "type": "noteon",
+          "channel": 0,
+          "note": 15
+        },
+        "stateMap": {
+          "locked": 127,
+          "enabled": 64,
+          "disabled": 0
+        }
+      }
+    },
+    "sync_b": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 16
+      },
+      "action": {
+        "type": "transport",
+        "command": "sync",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": {
+        "type": "led",
+        "midiOut": {
+          "type": "noteon",
+          "channel": 0,
+          "note": 16
+        },
+        "stateMap": {
+          "locked": 127,
+          "enabled": 64,
+          "disabled": 0
+        }
+      }
+    },
+    "browse_encoder": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 22
+      },
+      "action": {
+        "type": "library",
+        "command": "browse",
+        "direction": "value > 64 ? 'down' : 'up'"
+      },
+      "target": "app",
+      "priority": "normal"
+    },
+    "load_a": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 17
+      },
+      "action": {
+        "type": "library",
+        "command": "loadTrack",
+        "deck": "A"
+      },
+      "target": "app",
+      "priority": "normal"
+    },
+    "load_b": {
+      "midi": {
+        "type": "noteon",
+        "channel": 0,
+        "note": 18
+      },
+      "action": {
+        "type": "library",
+        "command": "loadTrack",
+        "deck": "B"
+      },
+      "target": "app",
+      "priority": "normal"
+    },
+    "crossfader": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 8
+      },
+      "action": {
+        "type": "mixer",
+        "command": "crossfader",
+        "valueExpression": "value / 127"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "volume_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 9
+      },
+      "action": {
+        "type": "mixer",
+        "command": "volume",
+        "deck": "A",
+        "valueExpression": "value / 127"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "volume_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 10
+      },
+      "action": {
+        "type": "mixer",
+        "command": "volume",
+        "deck": "B",
+        "valueExpression": "value / 127"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "tempo_a": {
+      "midi": {
+        "type": "pitch",
+        "channel": 0
+      },
+      "action": {
+        "type": "transport",
+        "command": "tempo",
+        "deck": "A",
+        "valueExpression": "(value - 8192) / 8192"
+      },
+      "target": "audio",
+      "priority": "high"
+    }
+  }
+}

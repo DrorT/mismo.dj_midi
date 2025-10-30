@@ -1,0 +1,11 @@
+{
+  "audioEngineUrl": "ws://localhost:8080",
+  "appServerUrl": "ws://localhost:3000",
+  "webUIUrl": "ws://localhost:8081",
+  "logLevel": "info",
+  "debug": false,
+  "hidJogPollInterval": 8,
+  "hidButtonPollInterval": 16,
+  "hidFaderPollInterval": 16,
+  "enablePerformanceMonitoring": false
+}
