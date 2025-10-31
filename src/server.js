@@ -1,4 +1,5 @@
 import { MIDIManager } from './managers/MIDIManager.js';
+import { HIDManager } from './managers/HIDManager.js';
 import { ActionMapper } from './mapping/ActionMapper.js';
 import { ActionRouter } from './mapping/ActionRouter.js';
 import { AudioEngineClient } from './websocket/AudioEngineClient.js';
@@ -14,6 +15,7 @@ class ControllerServer {
   constructor() {
     this.config = null;
     this.midiManager = null;
+    this.hidManager = null;
     this.mapper = null;
     this.router = null;
     this.audioClient = null;
@@ -58,6 +60,10 @@ class ControllerServer {
       logger.info('Initializing MIDI manager...');
       this.midiManager = new MIDIManager();
 
+      // Initialize HID
+      logger.info('Initializing HID manager...');
+      this.hidManager = new HIDManager();
+
       // Initialize action mapper
       logger.info('Loading device mappings...');
       this.mapper = new ActionMapper(this.config.mappingsPath);
@@ -90,11 +96,33 @@ class ControllerServer {
         this.mapper.removeTranslator(info.deviceId);
       });
 
+      // Connect HID input to router
+      this.hidManager.on('input', async (event) => {
+        await this._handleHIDInput(event);
+      });
+
+      // Handle HID device connections
+      this.hidManager.on('device:connected', async (info) => {
+        logger.info('HID device connected', info);
+
+        // Sync feedback to new device
+        if (this.feedbackManager) {
+          await this.feedbackManager.syncDevice(info.deviceId);
+        }
+      });
+
+      this.hidManager.on('device:disconnected', (info) => {
+        logger.info('HID device disconnected', info);
+
+        // Clean up translator
+        this.mapper.removeTranslator(info.deviceId);
+      });
+
       // Initialize feedback manager
       logger.info('Initializing feedback manager...');
       this.feedbackManager = new FeedbackManager(
         this.midiManager,
-        null, // HID manager will be added in Phase 2
+        this.hidManager,
         {
           audio: this.audioClient
         }
@@ -135,6 +163,38 @@ class ControllerServer {
         }
       }
 
+      // Scan and connect HID devices
+      logger.info('Scanning for HID devices...');
+      const hidDevices = await this.hidManager.scanDevices();
+
+      if (hidDevices.length === 0) {
+        logger.warn('No HID devices found');
+      } else {
+        // Auto-connect to available HID devices
+        for (const hidDevice of hidDevices) {
+          try {
+            // Try to find matching mapping by vendor/product ID
+            const vendorId = `0x${hidDevice.vendorId?.toString(16)}`;
+            const productId = `0x${hidDevice.productId?.toString(16)}`;
+
+            const mapping = this.mapper.findMatchingMapping(
+              hidDevice.product || 'Unknown',
+              vendorId,
+              productId
+            );
+
+            if (mapping) {
+              logger.info(`Found mapping for ${hidDevice.manufacturer} ${hidDevice.product}: ${mapping.device.name}`);
+              await this.hidManager.connectDevice(hidDevice.path, mapping);
+            } else {
+              logger.warn(`No mapping available for ${hidDevice.manufacturer} ${hidDevice.product} (${vendorId}:${productId}), skipping`);
+            }
+          } catch (error) {
+            logger.error(`Failed to connect to ${hidDevice.product}`, { error: error.message });
+          }
+        }
+      }
+
       // Set up graceful shutdown
       this._setupShutdownHandlers();
 
@@ -143,6 +203,7 @@ class ControllerServer {
       logger.info('='.repeat(60));
       logger.info('Controller Server started successfully');
       logger.info('Connected MIDI devices:', this.midiManager.getConnectedDevices().length);
+      logger.info('Connected HID devices:', this.hidManager.getConnectedDevices().length);
       logger.info('Available mappings:', this.mapper.getAvailableMappings().length);
       logger.info('WebSocket connection:');
       logger.info(`  - Audio Engine: ${this.audioClient.isConnected() ? 'Connected' : 'Disconnected'}`);
@@ -209,6 +270,53 @@ class ControllerServer {
   }
 
   /**
+   * Handle HID input event
+   * @private
+   */
+  async _handleHIDInput(event) {
+    try {
+      // Get device info
+      const devices = this.hidManager.getConnectedDevices();
+      const device = devices.find(d => d.deviceId === event.deviceId);
+
+      if (!device) {
+        logger.warn('Received input from unknown HID device', { deviceId: event.deviceId });
+        return;
+      }
+
+      // Get or create translator
+      const translator = await this.mapper.getTranslator(event.deviceId, device.product);
+
+      // Translate HID event to action
+      const action = translator.translate(event);
+
+      if (!action) {
+        // No mapping for this input
+        return;
+      }
+
+      if (this.config.debug) {
+        logger.debug('Action translated', {
+          device: device.product,
+          action: action.type,
+          command: action.command,
+          deck: action.deck,
+          target: action.target,
+          priority: action.priority
+        });
+      }
+
+      // Route action (Audio Engine will forward to App/UI as needed)
+      await this.router.route(action);
+    } catch (error) {
+      logger.error('Error handling HID input', {
+        error: error.message,
+        event
+      });
+    }
+  }
+
+  /**
    * Set up graceful shutdown handlers
    * @private
    */
@@ -257,6 +365,11 @@ class ControllerServer {
     // Disconnect all MIDI devices
     if (this.midiManager) {
       await this.midiManager.disconnectAll();
+    }
+
+    // Disconnect all HID devices
+    if (this.hidManager) {
+      await this.hidManager.disconnectAll();
     }
 
     // Disconnect WebSocket client

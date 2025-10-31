@@ -1,5 +1,6 @@
 import { loadDeviceMapping, validateDeviceMapping } from '../utils/config.js';
 import { MIDITranslator } from '../translators/MIDITranslator.js';
+import { HIDTranslator } from '../translators/HIDTranslator.js';
 import { logger } from '../utils/logger.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -116,8 +117,7 @@ export class ActionMapper {
     if (mapping.device.protocol === 'midi') {
       translator = new MIDITranslator(mapping);
     } else if (mapping.device.protocol === 'hid') {
-      // HID translator will be implemented in Phase 2
-      throw new Error('HID protocol not yet implemented');
+      translator = new HIDTranslator(mapping);
     } else {
       throw new Error(`Unknown protocol: ${mapping.device.protocol}`);
     }
@@ -167,7 +167,12 @@ export class ActionMapper {
     // Update translators
     for (const deviceId of devicesToUpdate) {
       this.translators.delete(deviceId);
-      const newTranslator = new MIDITranslator(mapping);
+
+      // Create translator based on protocol
+      const newTranslator = mapping.device.protocol === 'midi'
+        ? new MIDITranslator(mapping)
+        : new HIDTranslator(mapping);
+
       this.translators.set(deviceId, newTranslator);
 
       logger.info(`Updated translator for ${deviceId} with new mapping`);

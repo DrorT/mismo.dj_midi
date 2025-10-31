@@ -1,0 +1,395 @@
+{
+  "device": {
+    "name": "Traktor Kontrol Z1",
+    "protocol": "hid",
+    "vendor": "Native Instruments",
+    "vendorId": "0x17cc",
+    "productId": "0x1210",
+    "version": "1.0",
+    "description": "Native Instruments Traktor Kontrol Z1 - 2-channel mixer with FX",
+    "polling": {
+      "default": 8,
+      "buttons": 16,
+      "faders": 16
+    }
+  },
+  "parsing": {
+    "reportId": 1,
+    "reportLength": 64,
+    "controls": {
+      "_comment_mixer": "=== MIXER CONTROLS (example byte positions - needs actual HID sniffing) ===",
+
+      "crossfader": {
+        "bytes": [10, 11],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "volume_a": {
+        "bytes": [12, 13],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "volume_b": {
+        "bytes": [14, 15],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "gain_a": {
+        "bytes": [16, 17],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "gain_b": {
+        "bytes": [18, 19],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "eq_hi_a": {
+        "bytes": [20, 21],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "eq_mid_a": {
+        "bytes": [22, 23],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "eq_low_a": {
+        "bytes": [24, 25],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "eq_hi_b": {
+        "bytes": [26, 27],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "eq_mid_b": {
+        "bytes": [28, 29],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "eq_low_b": {
+        "bytes": [30, 31],
+        "type": "absolute",
+        "resolution": 14,
+        "min": 0,
+        "max": 16383
+      },
+
+      "_comment_buttons": "=== BUTTONS (example positions) ===",
+
+      "cue_a": {
+        "byte": 5,
+        "bit": 0,
+        "type": "button"
+      },
+
+      "cue_b": {
+        "byte": 5,
+        "bit": 1,
+        "type": "button"
+      },
+
+      "fx_on_a": {
+        "byte": 5,
+        "bit": 2,
+        "type": "button"
+      },
+
+      "fx_on_b": {
+        "byte": 5,
+        "bit": 3,
+        "type": "button"
+      },
+
+      "fx_select_1": {
+        "byte": 5,
+        "bit": 4,
+        "type": "button"
+      },
+
+      "fx_select_2": {
+        "byte": 5,
+        "bit": 5,
+        "type": "button"
+      },
+
+      "fx_select_3": {
+        "byte": 5,
+        "bit": 6,
+        "type": "button"
+      }
+    }
+  },
+  "mappings": {
+    "_comment_mixer": "=== MIXER MAPPINGS ===",
+
+    "crossfader": {
+      "action": {
+        "type": "mixer",
+        "command": "crossfader"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "volume_a": {
+      "action": {
+        "type": "mixer",
+        "command": "volume",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "volume_b": {
+      "action": {
+        "type": "mixer",
+        "command": "volume",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "gain_a": {
+      "action": {
+        "type": "mixer",
+        "command": "trim",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "gain_b": {
+      "action": {
+        "type": "mixer",
+        "command": "trim",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_hi_a": {
+      "action": {
+        "type": "mixer",
+        "command": "eq_high",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_mid_a": {
+      "action": {
+        "type": "mixer",
+        "command": "eq_mid",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_low_a": {
+      "action": {
+        "type": "mixer",
+        "command": "eq_low",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_hi_b": {
+      "action": {
+        "type": "mixer",
+        "command": "eq_high",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_mid_b": {
+      "action": {
+        "type": "mixer",
+        "command": "eq_mid",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_low_b": {
+      "action": {
+        "type": "mixer",
+        "command": "eq_low",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "_comment_buttons": "=== BUTTON MAPPINGS ===",
+
+    "cue_a": {
+      "action": {
+        "type": "mixer",
+        "command": "headphone_cue",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": {
+        "type": "led",
+        "hidOut": {
+          "reportId": 128,
+          "byte": 10,
+          "bit": 0
+        }
+      }
+    },
+
+    "cue_b": {
+      "action": {
+        "type": "mixer",
+        "command": "headphone_cue",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": {
+        "type": "led",
+        "hidOut": {
+          "reportId": 128,
+          "byte": 10,
+          "bit": 1
+        }
+      }
+    },
+
+    "fx_on_a": {
+      "action": {
+        "type": "effect",
+        "command": "on",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": {
+        "type": "led",
+        "hidOut": {
+          "reportId": 128,
+          "byte": 10,
+          "bit": 2
+        }
+      }
+    },
+
+    "fx_on_b": {
+      "action": {
+        "type": "effect",
+        "command": "on",
+        "deck": "B"
+      },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": {
+        "type": "led",
+        "hidOut": {
+          "reportId": 128,
+          "byte": 10,
+          "bit": 3
+        }
+      }
+    },
+
+    "fx_select_1": {
+      "action": {
+        "type": "effect",
+        "command": "select",
+        "slot": 1
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "fx_select_2": {
+      "action": {
+        "type": "effect",
+        "command": "select",
+        "slot": 2
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "fx_select_3": {
+      "action": {
+        "type": "effect",
+        "command": "select",
+        "slot": 3
+      },
+      "target": "audio",
+      "priority": "normal"
+    }
+  },
+  "outputs": {
+    "leds": {
+      "reportId": 128,
+      "reportLength": 32,
+      "description": "LED output report for button feedback"
+    }
+  },
+  "_implementation_notes": [
+    "This is a TEMPLATE configuration for Traktor Kontrol Z1",
+    "Byte positions and bit positions are PLACEHOLDERS and need to be determined by:",
+    "1. Running HID sniffer to capture actual HID reports",
+    "2. Observing which bytes change when controls are moved",
+    "3. Documenting the actual HID report structure",
+    "The Z1 is a 2-channel mixer with:",
+    "- 3-band EQ per channel",
+    "- Gain/Trim per channel",
+    "- Channel faders",
+    "- Crossfader",
+    "- Cue buttons",
+    "- FX section with 3 effect selectors",
+    "- Headphone cue/mix controls",
+    "No jog wheels (mixer only)",
+    "Uses HID protocol exclusively (no MIDI)"
+  ]
+}
