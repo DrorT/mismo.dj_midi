@@ -184,18 +184,36 @@ export class MIDIManager extends EventEmitter {
   _setupInputHandlers(deviceId, input) {
     // Note On events
     input.on('noteon', (msg) => {
+      logger.info('[MIDI IN] Note On', {
+        deviceId,
+        channel: msg.channel,
+        note: msg.note,
+        velocity: msg.velocity
+      });
       const normalized = this._normalizeMIDIMessage(deviceId, 'noteon', msg);
       this.emit('input', normalized);
     });
 
     // Note Off events
     input.on('noteoff', (msg) => {
+      logger.info('[MIDI IN] Note Off', {
+        deviceId,
+        channel: msg.channel,
+        note: msg.note,
+        velocity: msg.velocity
+      });
       const normalized = this._normalizeMIDIMessage(deviceId, 'noteoff', msg);
       this.emit('input', normalized);
     });
 
     // Control Change events
     input.on('cc', (msg) => {
+      logger.info('[MIDI IN] CC', {
+        deviceId,
+        channel: msg.channel,
+        controller: msg.controller,
+        value: msg.value
+      });
       const normalized = this._normalizeMIDIMessage(deviceId, 'cc', msg);
 
       // Check if this might be part of a 14-bit CC message
@@ -212,12 +230,22 @@ export class MIDIManager extends EventEmitter {
 
     // Pitch Bend events
     input.on('pitch', (msg) => {
+      logger.info('[MIDI IN] Pitch Bend', {
+        deviceId,
+        channel: msg.channel,
+        value: msg.value
+      });
       const normalized = this._normalizeMIDIMessage(deviceId, 'pitch', msg);
       this.emit('input', normalized);
     });
 
     // Program Change events
     input.on('program', (msg) => {
+      logger.info('[MIDI IN] Program Change', {
+        deviceId,
+        channel: msg.channel,
+        program: msg.number
+      });
       const normalized = this._normalizeMIDIMessage(deviceId, 'program', msg);
       this.emit('input', normalized);
     });

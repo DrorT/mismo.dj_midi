@@ -43,6 +43,27 @@ export class MIDITranslator {
 
     try {
       const action = this._buildAction(midiEvent, mapping);
+
+      logger.info('[TRANSLATE] MIDI -> Action', {
+        device: this.deviceName,
+        midi: {
+          type: midiEvent.type,
+          channel: midiEvent.channel,
+          note: midiEvent.note,
+          controller: midiEvent.controller,
+          value: midiEvent.value,
+          velocity: midiEvent.velocity
+        },
+        action: {
+          type: action.type,
+          command: action.command,
+          target: action.target,
+          deck: action.deck,
+          value: action.value,
+          priority: action.priority
+        }
+      });
+
       return action;
     } catch (error) {
       logger.error('Failed to translate MIDI event', {

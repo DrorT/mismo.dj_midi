@@ -101,7 +101,7 @@ export class ActionRouter extends EventEmitter {
     try {
       // Send all actions to Audio Engine with flat structure
       // Audio Engine will route based on the 'target' field
-      const success = await this.audioClient.send({
+      const message = {
         type: action.type,
         command: action.command,
         target: action.target, // Audio Engine uses this to route message
@@ -112,7 +112,18 @@ export class ActionRouter extends EventEmitter {
         delta: action.delta,
         direction: action.direction,
         from: action.from // Device name for context
+      };
+
+      logger.info('[SEND] Command to Audio Engine', {
+        type: message.type,
+        command: message.command,
+        target: message.target,
+        deck: message.deck,
+        value: message.value,
+        priority: message.priority
       });
+
+      const success = await this.audioClient.send(message);
 
       if (process.env.DEBUG === 'true') {
         logger.debug('Action sent', {
