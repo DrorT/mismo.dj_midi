@@ -5,11 +5,13 @@ import { logger } from '../utils/logger.js';
  * Centralized feedback management
  *
  * Responsibilities:
- * - Subscribe to Audio Engine state (playback, VU, sync, etc.)
- * - Subscribe to App Server state (playlist, selected track, etc.)
+ * - Subscribe to Audio Engine state (which aggregates all service states)
  * - Maintain controller state model
  * - Push LED/display updates to controllers
  * - Throttle updates to avoid overwhelming controllers
+ *
+ * Note: Audio Engine forwards state updates from App Server and Web UI,
+ * so we only need a single connection point.
  */
 export class FeedbackManager extends EventEmitter {
   constructor(midiManager, hidManager, wsClients) {
@@ -17,8 +19,8 @@ export class FeedbackManager extends EventEmitter {
 
     this.midiManager = midiManager;
     this.hidManager = hidManager; // Will be null in Phase 1
+    // Single connection point - Audio Engine forwards all state updates
     this.audioClient = wsClients.audio;
-    this.appClient = wsClients.app;
 
     // State cache
     this.state = {
@@ -54,28 +56,43 @@ export class FeedbackManager extends EventEmitter {
   }
 
   /**
-   * Initialize: Subscribe to state updates
+   * Initialize: Subscribe to state updates from Audio Engine
    * @returns {Promise<void>}
    */
   async initialize() {
     // Subscribe to Audio Engine state updates
+    // Audio Engine aggregates and forwards state from all services
     this.audioClient.on('state', (message) => {
-      this._onAudioState(message);
-    });
-
-    // Subscribe to App Server state updates
-    this.appClient.on('state', (message) => {
-      this._onAppState(message);
+      this._onStateUpdate(message);
     });
 
     logger.info('FeedbackManager initialized');
   }
 
   /**
-   * Handle audio engine state updates
+   * Handle state updates from Audio Engine
+   * Audio Engine forwards state from all services with a 'source' field
    * @private
    */
-  _onAudioState(state) {
+  _onStateUpdate(state) {
+    // Check source to determine what kind of state this is
+    const source = state.source; // 'audio', 'app', or 'ui'
+
+    if (source === 'audio' || !source) {
+      // Audio-related state (playback, VU, sync, tempo)
+      this._handleAudioState(state);
+    } else if (source === 'app') {
+      // App-related state (library, playlists)
+      this._handleAppState(state);
+    }
+    // UI state updates are generally not needed for hardware feedback
+  }
+
+  /**
+   * Handle audio-related state updates
+   * @private
+   */
+  _handleAudioState(state) {
     const deck = state.deck?.toLowerCase() || 'a';
     const deckKey = `deck${deck.toUpperCase()}`;
 
@@ -112,10 +129,10 @@ export class FeedbackManager extends EventEmitter {
   }
 
   /**
-   * Handle app server state updates
+   * Handle app-related state updates (forwarded by Audio Engine)
    * @private
    */
-  _onAppState(state) {
+  _handleAppState(state) {
     if (state.selectedTrack) {
       this.state.library.selectedTrack = state.selectedTrack;
       this._updateTrackInfoFeedback(state.selectedTrack);

@@ -28,9 +28,8 @@ export async function loadConfig() {
   // Merge environment variables with file config
   // Environment variables take precedence
   const config = {
+    // Single connection point to Audio Engine
     audioEngineUrl: process.env.AUDIO_ENGINE_URL || serverConfig.audioEngineUrl || 'ws://localhost:8080',
-    appServerUrl: process.env.APP_SERVER_URL || serverConfig.appServerUrl || 'ws://localhost:3000',
-    webUIUrl: process.env.WEB_UI_URL || serverConfig.webUIUrl || 'ws://localhost:8081',
 
     logLevel: process.env.LOG_LEVEL || serverConfig.logLevel || 'info',
     debug: process.env.DEBUG === 'true' || serverConfig.debug || false,
@@ -88,8 +87,13 @@ export function validateDeviceMapping(mapping) {
     throw new Error('Device mapping must include "mappings" object');
   }
 
-  // Validate each mapping
+  // Validate each mapping (skip meta-fields starting with _)
   for (const [key, map] of Object.entries(mapping.mappings)) {
+    // Skip comment fields and other meta-fields
+    if (key.startsWith('_')) {
+      continue;
+    }
+
     if (!map.action) {
       throw new Error(`Mapping "${key}" must include "action" section`);
     }

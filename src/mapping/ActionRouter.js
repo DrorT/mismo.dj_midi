@@ -2,16 +2,15 @@ import { EventEmitter } from 'events';
 import { logger } from '../utils/logger.js';
 
 /**
- * Routes actions to Audio Engine, App Server, or Web UI
+ * Routes actions to Audio Engine (which forwards to App Server or Web UI as needed)
  * Handles priority queuing for time-critical actions
  */
 export class ActionRouter extends EventEmitter {
   constructor(wsClients) {
     super();
 
+    // Single connection point - all actions route through Audio Engine
     this.audioClient = wsClients.audio;
-    this.appClient = wsClients.app;
-    this.uiClient = wsClients.ui;
 
     this.criticalQueue = []; // Jog wheels - bypass queue, send immediately
     this.highQueue = []; // Transport controls
@@ -90,48 +89,29 @@ export class ActionRouter extends EventEmitter {
   }
 
   /**
-   * Send action to appropriate WebSocket client
+   * Send action to Audio Engine (which routes based on target field)
    * @private
    */
   async _sendAction(action) {
-    let client;
-
-    switch (action.target) {
-      case 'audio':
-        client = this.audioClient;
-        break;
-
-      case 'app':
-        client = this.appClient;
-        break;
-
-      case 'ui':
-        client = this.uiClient;
-        break;
-
-      default:
-        logger.warn(`Unknown action target: ${action.target}`);
-        return false;
-    }
-
-    if (!client) {
-      logger.warn(`No client available for target: ${action.target}`);
+    if (!this.audioClient) {
+      logger.warn('Audio Engine client not available');
       return false;
     }
 
     try {
-      const success = await client.send({
-        type: 'action',
+      // Send all actions to Audio Engine with flat structure
+      // Audio Engine will route based on the 'target' field
+      const success = await this.audioClient.send({
+        type: action.type,
+        command: action.command,
+        target: action.target, // Audio Engine uses this to route message
         priority: action.priority,
         timestamp: action.timestamp || Date.now(),
-        action: {
-          type: action.type,
-          deck: action.deck,
-          command: action.command,
-          value: action.value,
-          delta: action.delta,
-          direction: action.direction
-        }
+        deck: action.deck,
+        value: action.value,
+        delta: action.delta,
+        direction: action.direction,
+        from: action.from // Device name for context
       });
 
       if (process.env.DEBUG === 'true') {

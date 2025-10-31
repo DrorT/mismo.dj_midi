@@ -2,8 +2,6 @@ import { MIDIManager } from './managers/MIDIManager.js';
 import { ActionMapper } from './mapping/ActionMapper.js';
 import { ActionRouter } from './mapping/ActionRouter.js';
 import { AudioEngineClient } from './websocket/AudioEngineClient.js';
-import { AppServerClient } from './websocket/AppServerClient.js';
-import { WebUIClient } from './websocket/WebUIClient.js';
 import { FeedbackManager } from './feedback/FeedbackManager.js';
 import { logger } from './utils/logger.js';
 import { loadConfig } from './utils/config.js';
@@ -19,8 +17,6 @@ class ControllerServer {
     this.mapper = null;
     this.router = null;
     this.audioClient = null;
-    this.appClient = null;
-    this.uiClient = null;
     this.feedbackManager = null;
     this.running = false;
   }
@@ -38,50 +34,24 @@ class ControllerServer {
       this.config = await loadConfig();
       logger.info('Configuration loaded', {
         audioEngineUrl: this.config.audioEngineUrl,
-        appServerUrl: this.config.appServerUrl,
-        webUIUrl: this.config.webUIUrl,
         debug: this.config.debug
       });
 
-      // Initialize WebSocket clients
-      logger.info('Initializing WebSocket clients...');
+      // Initialize WebSocket client (single connection to Audio Engine)
+      logger.info('Initializing Audio Engine WebSocket client...');
 
       this.audioClient = new AudioEngineClient(this.config.audioEngineUrl);
-      this.appClient = new AppServerClient(this.config.appServerUrl);
-      this.uiClient = new WebUIClient(this.config.webUIUrl);
 
-      // Connect to downstream services (with error handling)
-      const connections = [];
+      // Connect to Audio Engine (with error handling)
+      await this.audioClient.connect().catch(error => {
+        logger.warn('Failed to connect to Audio Engine (will retry)', { error: error.message });
+        return null;
+      });
 
-      connections.push(
-        this.audioClient.connect().catch(error => {
-          logger.warn('Failed to connect to Audio Engine (will retry)', { error: error.message });
-          return null;
-        })
-      );
-
-      connections.push(
-        this.appClient.connect().catch(error => {
-          logger.warn('Failed to connect to App Server (will retry)', { error: error.message });
-          return null;
-        })
-      );
-
-      connections.push(
-        this.uiClient.connect().catch(error => {
-          logger.warn('Failed to connect to Web UI (will retry)', { error: error.message });
-          return null;
-        })
-      );
-
-      await Promise.allSettled(connections);
-
-      // Initialize routing
+      // Initialize routing (all actions route through Audio Engine)
       logger.info('Initializing action router...');
       this.router = new ActionRouter({
-        audio: this.audioClient,
-        app: this.appClient,
-        ui: this.uiClient
+        audio: this.audioClient
       });
 
       // Initialize MIDI
@@ -126,8 +96,7 @@ class ControllerServer {
         this.midiManager,
         null, // HID manager will be added in Phase 2
         {
-          audio: this.audioClient,
-          app: this.appClient
+          audio: this.audioClient
         }
       );
 
@@ -175,10 +144,8 @@ class ControllerServer {
       logger.info('Controller Server started successfully');
       logger.info('Connected MIDI devices:', this.midiManager.getConnectedDevices().length);
       logger.info('Available mappings:', this.mapper.getAvailableMappings().length);
-      logger.info('WebSocket connections:');
+      logger.info('WebSocket connection:');
       logger.info(`  - Audio Engine: ${this.audioClient.isConnected() ? 'Connected' : 'Disconnected'}`);
-      logger.info(`  - App Server: ${this.appClient.isConnected() ? 'Connected' : 'Disconnected'}`);
-      logger.info(`  - Web UI: ${this.uiClient.isConnected() ? 'Connected' : 'Disconnected'}`);
       logger.info('='.repeat(60));
 
       // Log stats periodically
@@ -231,17 +198,8 @@ class ControllerServer {
         });
       }
 
-      // Route action
+      // Route action (Audio Engine will forward to App/UI as needed)
       await this.router.route(action);
-
-      // Also send to Web UI for visual feedback
-      if (this.uiClient.isConnected()) {
-        await this.uiClient.send({
-          type: 'controller:action',
-          device: device.name,
-          action
-        });
-      }
     } catch (error) {
       logger.error('Error handling MIDI input', {
         error: error.message,
@@ -301,17 +259,9 @@ class ControllerServer {
       await this.midiManager.disconnectAll();
     }
 
-    // Disconnect WebSocket clients
+    // Disconnect WebSocket client
     if (this.audioClient) {
       await this.audioClient.disconnect();
-    }
-
-    if (this.appClient) {
-      await this.appClient.disconnect();
-    }
-
-    if (this.uiClient) {
-      await this.uiClient.disconnect();
     }
 
     logger.info('Controller Server stopped');

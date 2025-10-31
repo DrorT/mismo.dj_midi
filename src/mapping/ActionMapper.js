@@ -91,11 +91,11 @@ export class ActionMapper {
       return this.translators.get(deviceId);
     }
 
-    // Try to find matching mapping
-    let mapping = this.deviceMappings.get(deviceName);
+    // Try to find matching mapping from already-loaded mappings
+    let mapping = this.findMatchingMapping(deviceName);
 
     if (!mapping) {
-      // Try to load mapping for this device
+      // If no match found, try to load mapping file directly
       try {
         mapping = await this.loadMapping(deviceName);
       } catch (error) {
