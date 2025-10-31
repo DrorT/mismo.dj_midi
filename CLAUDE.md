@@ -21,15 +21,17 @@ This repository is currently in the **planning phase**. The implementation plan 
 
 ## Architecture Overview
 
-The Controller Server acts as a bridge between physical DJ controllers and three downstream services:
+The Controller Server acts as a bridge between physical DJ controllers and downstream services. All WebSocket communication routes through the Audio Engine, which handles message forwarding to App Server and Web UI:
 
 ```
 Physical Controllers (MIDI/HID)
     ↓
 Controller Server (this repo)
-    ├─→ Audio Engine (WebSocket) - Transport, jog, effects
-    ├─→ App Server (WebSocket) - Library, playlist actions
-    └─→ Web UI (WebSocket) - Visual state updates
+    ↓
+    └─→ Audio Engine (WebSocket) - Single connection point
+         ├─→ Audio Engine (processes transport, jog, effects)
+         ├─→ App Server (forwards library, playlist actions)
+         └─→ Web UI (forwards visual state updates)
     ↑
 State feedback (LEDs, displays, VU meters)
 ```
@@ -48,10 +50,10 @@ State feedback (LEDs, displays, VU meters)
   - `ActionMapper.js` - Load device configs from `config/devices/`
   - `ActionRouter.js` - Priority-based routing (critical/high/normal queues)
 
-- **WebSocket Clients** (`src/websocket/`): Downstream service communication
-  - `AudioEngineClient.js` - Bidirectional: commands out, state/VU in
-  - `AppServerClient.js` - Bidirectional: commands out, library state in
-  - `WebUIClient.js` - Send-only: state updates for visual feedback
+- **WebSocket Client** (`src/websocket/`): Downstream service communication
+  - `AudioEngineClient.js` - Single bidirectional connection to Audio Engine
+    - Sends actions with routing metadata (`target: "audio" | "app" | "ui"`)
+    - Receives state updates from all services (forwarded by Audio Engine)
 
 - **Feedback** (`src/feedback/`): Hardware output management
   - `FeedbackManager.js` - Aggregate state from services, push to LEDs/displays
@@ -98,6 +100,8 @@ Three priority levels for action routing:
 - State cache used to sync LEDs when new controller connects
 
 ### WebSocket Communication
+- **Single connection** to Audio Engine (simplifies architecture for Phase 1)
+- Audio Engine routes messages to appropriate services based on `target` field
 - Auto-reconnect with exponential backoff on connection loss
 - Action queuing during connection outage (with overflow protection)
 - Subscribe to specific state events to reduce bandwidth
@@ -166,32 +170,39 @@ Verify latency requirements:
 
 ## WebSocket API Contracts
 
-### Actions (Controller → Services)
+### Actions (Controller → Audio Engine)
+All actions sent to Audio Engine with flat structure and routing metadata:
+
 ```javascript
 {
-  type: "action",
+  type: "transport" | "jog" | "effect" | "mixer" | "library",
+  command: string,
+  target: "audio" | "app" | "ui",  // Audio Engine uses this to route message
+  from: string,  // MIDI/HID device name (e.g., "DDJ-FLX4", "Traktor S4")
   priority: "critical" | "high" | "normal",
   timestamp: number,
-  action: {
-    type: "transport" | "jog" | "effect" | "mixer" | "library",
-    deck: "A" | "B",
-    command: string,
-    value?: number,
-    delta?: number  // For jog wheels
-  }
+  deck?: "A" | "B",
+  value?: number,
+  delta?: number,  // For jog wheels
+  direction?: "up" | "down"  // For encoders/browse
 }
 ```
 
-### State Updates (Services → Controller)
+### State Updates (Audio Engine → Controller)
+Audio Engine aggregates and forwards state from all services:
+
 ```javascript
 {
   type: "state",
+  source: "audio" | "app" | "ui",  // Indicates origin of state update
   timestamp: number,
   deck?: "A" | "B",
   playback?: { playing: boolean, paused: boolean, cued: boolean },
   position?: { currentTime: number, duration: number },
   vuMeter?: { peak: number, rms: number },
-  sync?: { enabled: boolean, locked: boolean }
+  sync?: { enabled: boolean, locked: boolean },
+  selectedTrack?: object,  // From App Server
+  playlist?: object  // From App Server
 }
 ```
 
@@ -220,7 +231,10 @@ Controller Server requires USB device access:
 ## Related Repositories
 
 - **Audio Engine**: Handles audio playback, effects, mixing (WebSocket server)
+  - Acts as **message router** for Controller Server
+  - Forwards App Server and Web UI bound messages
+  - Aggregates state updates from all services
 - **App Server**: Manages music library, playlists, metadata (WebSocket server)
 - **Web UI**: Browser-based DJ interface (WebSocket server)
 
-This Controller Server communicates with all three as a WebSocket **client**.
+This Controller Server connects only to Audio Engine as a WebSocket **client**.

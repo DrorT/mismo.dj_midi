@@ -90,9 +90,9 @@ The Controller Server is a new Node.js-based microservice that will handle all p
 |------------|----------|-----------|---------|
 | MIDI Hardware | MIDI (USB/DIN) | Bidirectional | Control input, LED output |
 | HID Hardware | USB HID | Bidirectional | Control input, display/LED output |
-| Audio Engine | WebSocket | Bidirectional | Commands out, state/VU in |
-| App Server | WebSocket | Bidirectional | Commands out, library state in |
-| Web UI | WebSocket | Send only | State updates for visual feedback |
+| Audio Engine | WebSocket | Bidirectional | Single connection for all downstream communication |
+
+**Note**: In Phase 1, Controller Server connects **only** to Audio Engine. The Audio Engine routes messages to App Server and Web UI based on the `target` field in action messages, and aggregates state updates from all services back to the Controller Server.
 
 ---
 
@@ -119,9 +119,7 @@ mismo.dj_controller_server/
 │   │   ├── ActionMapper.js       # Configuration-based mapping
 │   │   └── ActionRouter.js       # Route actions to targets
 │   ├── websocket/
-│   │   ├── AudioEngineClient.js  # WebSocket to Audio Engine
-│   │   ├── AppServerClient.js    # WebSocket to App Server
-│   │   └── WebUIClient.js        # WebSocket to Web UI
+│   │   └── AudioEngineClient.js  # Single WebSocket to Audio Engine
 │   ├── feedback/
 │   │   └── FeedbackManager.js    # Aggregate state, send to hardware
 │   └── utils/
@@ -232,15 +230,16 @@ class MIDIManager extends EventEmitter {
  * Translates raw MIDI events into semantic actions
  *
  * Example:
- * Input:  { type: 'noteon', channel: 0, note: 0x10, velocity: 127 }
- * Output: { action: 'play', deck: 'A', value: true }
+ * Input:  { type: 'noteon', channel: 0, note: 0x10, velocity: 127, deviceId: 'ddj-flx4' }
+ * Output: { type: 'transport', command: 'play', deck: 'A', target: 'audio', from: 'DDJ-FLX4' }
  */
 class MIDITranslator {
-  constructor(mapping) {
+  constructor(mapping, deviceName) {
     this.mapping = mapping; // Device-specific mapping config
+    this.deviceName = deviceName; // Human-readable device name
   }
 
-  // Translate MIDI event to action
+  // Translate MIDI event to action (includes 'from' field)
   translate(midiEvent);
 
   // Reverse: Translate action to MIDI message
@@ -292,10 +291,10 @@ class ActionMapper {
       "action": {
         "type": "transport",
         "command": "play",
-        "deck": "A"
+        "deck": "A",
+        "target": "audio",
+        "priority": "high"
       },
-      "target": "audio",
-      "priority": "high",
       "feedback": {
         "type": "led",
         "midiOut": {
@@ -318,10 +317,10 @@ class ActionMapper {
       "action": {
         "type": "transport",
         "command": "cue",
-        "deck": "A"
-      },
-      "target": "audio",
-      "priority": "high"
+        "deck": "A",
+        "target": "audio",
+        "priority": "high"
+      }
     },
     "browse_encoder": {
       "midi": {
@@ -332,10 +331,10 @@ class ActionMapper {
       "action": {
         "type": "library",
         "command": "browse",
-        "direction": "value > 64 ? 'down' : 'up'"
-      },
-      "target": "app",
-      "priority": "normal"
+        "direction": "value > 64 ? 'down' : 'up'",
+        "target": "app",       // Audio Engine will forward to App Server
+        "priority": "normal"
+      }
     },
     "load_a": {
       "midi": {
@@ -346,34 +345,33 @@ class ActionMapper {
       "action": {
         "type": "library",
         "command": "loadTrack",
-        "deck": "A"
-      },
-      "target": "app",
-      "priority": "normal"
+        "deck": "A",
+        "target": "app",
+        "priority": "normal"
+      }
     }
   }
 }
 ```
 
 #### ActionRouter.js
-**Purpose**: Route actions to appropriate WebSocket clients with priority handling
+**Purpose**: Route actions to Audio Engine with priority handling
 
 ```javascript
 /**
- * Routes actions to Audio Engine, App Server, or Web UI
+ * Routes actions to Audio Engine
  * Handles priority queuing for time-critical actions
+ * Actions already contain target and from fields from translator
  */
 class ActionRouter {
-  constructor(wsClients) {
-    this.audioClient = wsClients.audio;
-    this.appClient = wsClients.app;
-    this.uiClient = wsClients.ui;
+  constructor(audioClient) {
+    this.audioClient = audioClient;
 
     this.criticalQueue = [];   // High-priority (jog, play, cue)
     this.normalQueue = [];     // Normal priority (browse, load)
   }
 
-  // Route action based on target
+  // Route action to Audio Engine (action already has target/from/priority)
   route(action);
 
   // Process queues (prioritize critical actions)
@@ -381,14 +379,14 @@ class ActionRouter {
 }
 ```
 
-#### WebSocket Clients
-**Purpose**: Communicate with downstream services
+#### WebSocket Client
+**Purpose**: Single connection to Audio Engine for all downstream communication
 
 ```javascript
 /**
  * WebSocket client for Audio Engine
- * Sends: Transport, jog, effect commands
- * Receives: Playback state, VU meters, waveform data
+ * Sends: Flat action messages with target/from/priority fields
+ * Receives: Aggregated state from all services
  */
 class AudioEngineClient extends EventEmitter {
   constructor(url) {
@@ -400,7 +398,12 @@ class AudioEngineClient extends EventEmitter {
 
   async connect();
   async disconnect();
+
+  // Send action (flat structure with target/from fields)
   send(action);
+
+  // Send critical action (bypass queue)
+  sendCritical(action);
 
   // Event handlers
   _onMessage(data);
@@ -408,8 +411,6 @@ class AudioEngineClient extends EventEmitter {
   _onError(error);
 }
 ```
-
-**Similar classes**: `AppServerClient`, `WebUIClient`
 
 ### 1.4 Server Entry Point
 
@@ -420,8 +421,6 @@ import { MIDIManager } from './managers/MIDIManager.js';
 import { ActionMapper } from './mapping/ActionMapper.js';
 import { ActionRouter } from './mapping/ActionRouter.js';
 import { AudioEngineClient } from './websocket/AudioEngineClient.js';
-import { AppServerClient } from './websocket/AppServerClient.js';
-import { WebUIClient } from './websocket/WebUIClient.js';
 import { FeedbackManager } from './feedback/FeedbackManager.js';
 import { logger } from './utils/logger.js';
 import { loadConfig } from './utils/config.js';
@@ -433,23 +432,12 @@ class ControllerServer {
     // Load configuration
     const config = await loadConfig();
 
-    // Initialize WebSocket clients
+    // Initialize WebSocket client (single connection to Audio Engine)
     const audioClient = new AudioEngineClient(config.audioEngineUrl);
-    const appClient = new AppServerClient(config.appServerUrl);
-    const uiClient = new WebUIClient(config.webUIUrl);
+    await audioClient.connect();
 
-    await Promise.all([
-      audioClient.connect(),
-      appClient.connect(),
-      uiClient.connect()
-    ]);
-
-    // Initialize routing
-    const router = new ActionRouter({
-      audio: audioClient,
-      app: appClient,
-      ui: uiClient
-    });
+    // Initialize routing (Audio Engine handles forwarding)
+    const router = new ActionRouter(audioClient);
 
     // Initialize MIDI
     const mapper = new ActionMapper(config.mappingsPath);
@@ -464,11 +452,8 @@ class ControllerServer {
       }
     });
 
-    // Initialize feedback manager
-    const feedbackManager = new FeedbackManager(midiManager, {
-      audio: audioClient,
-      app: appClient
-    });
+    // Initialize feedback manager (receives aggregated state from Audio Engine)
+    const feedbackManager = new FeedbackManager(midiManager, audioClient);
 
     // Scan and connect MIDI devices
     await midiManager.scanDevices();
@@ -596,12 +581,13 @@ class HIDManager extends EventEmitter {
  * - Encoder rotations
  */
 class HIDTranslator {
-  constructor(mapping) {
+  constructor(mapping, deviceName) {
     this.mapping = mapping;
+    this.deviceName = deviceName; // Human-readable device name
     this.modifierState = {}; // Track shift/modifier buttons
   }
 
-  // Translate HID state change to action
+  // Translate HID state change to action (includes 'from' field)
   translate(hidEvent);
 
   // Handle jog wheel deltas
@@ -671,19 +657,19 @@ class HIDTranslator {
       "action": {
         "type": "jog",
         "deck": "A",
-        "mode": "state.shift_left ? 'bend' : 'scratch'"
-      },
-      "target": "audio",
-      "priority": "critical"
+        "mode": "state.shift_left ? 'bend' : 'scratch'",
+        "target": "audio",
+        "priority": "critical"
+      }
     },
     "play_a": {
       "action": {
         "type": "transport",
         "command": "play",
-        "deck": "A"
+        "deck": "A",
+        "target": "audio",
+        "priority": "high"
       },
-      "target": "audio",
-      "priority": "high",
       "feedback": {
         "type": "led",
         "hidOut": {
@@ -737,15 +723,19 @@ class JogWheelHandler {
   }
 
   // Called directly from HIDManager poll loop
-  handleJog(deck, rawValue) {
+  handleJog(deck, rawValue, deviceName) {
     const delta = this._calculateDelta(deck, rawValue);
 
     if (delta !== 0) {
       // Send immediately, bypass router queue
       this.audioClient.sendCritical({
         type: 'jog',
+        command: 'scratch',
         deck,
         delta,
+        target: 'audio',
+        from: deviceName,
+        priority: 'critical',
         timestamp: performance.now()
       });
     }
@@ -866,11 +856,10 @@ function sendVUMeter(deviceId, deck, level) {
  * - Throttle updates to avoid overwhelming controllers
  */
 class FeedbackManager {
-  constructor(midiManager, hidManager, wsClients) {
+  constructor(midiManager, hidManager, audioClient) {
     this.midiManager = midiManager;
     this.hidManager = hidManager;
-    this.audioClient = wsClients.audio;
-    this.appClient = wsClients.app;
+    this.audioClient = audioClient;  // Single connection, receives aggregated state
 
     this.state = {
       deckA: {},
@@ -882,14 +871,11 @@ class FeedbackManager {
     this.updateThrottles = new Map();  // Control update frequency
   }
 
-  // Initialize: Subscribe to state updates
+  // Initialize: Subscribe to state updates (from Audio Engine)
   async initialize();
 
-  // Handle audio engine state updates
-  _onAudioState(state);
-
-  // Handle app server state updates
-  _onAppState(state);
+  // Handle state updates (from Audio Engine, checks source field)
+  _onStateUpdate(state);
 
   // Push updates to specific device
   _updateDevice(deviceId);
@@ -901,34 +887,43 @@ class FeedbackManager {
 
 ### 3.2 State Subscriptions
 
-#### Audio Engine State
+#### Subscribing to State Updates
 
-**WebSocket messages from Audio Engine**:
+**WebSocket messages to Audio Engine** (Audio Engine aggregates from all services):
 
 ```javascript
-// Subscribe to state updates
+// Subscribe to state updates (Audio Engine forwards from all services)
 audioClient.send({
   type: 'subscribe',
   events: [
+    // Audio Engine events
     'playback',      // Play/pause state
     'position',      // Track position (throttled to 30Hz)
     'vuMeter',       // VU levels (60Hz)
     'sync',          // Sync/beatmatch state
     'effects',       // Effect on/off states
-    'tempo'          // Tempo/pitch values
+    'tempo',         // Tempo/pitch values
+
+    // App Server events (forwarded by Audio Engine)
+    'selectedTrack', // Current selection
+    'playlist',      // Playlist changes
+    'browser'        // Library browser state
   ]
 });
 
-// Receive state updates
+// Receive aggregated state updates
 audioClient.on('state', (message) => {
-  feedbackManager.handleAudioState(message);
+  feedbackManager.handleStateUpdate(message);
 });
 ```
 
-**Example state message**:
+**Example state messages**:
+
 ```json
+// Audio Engine state (source: "audio")
 {
   "type": "state",
+  "source": "audio",
   "timestamp": 1729950000000,
   "deck": "A",
   "playback": {
@@ -954,33 +949,11 @@ audioClient.on('state', (message) => {
     "pitch": 0.02  // +2%
   }
 }
-```
 
-#### App Server State
-
-**WebSocket messages from App Server**:
-
-```javascript
-// Subscribe to library state
-appClient.send({
-  type: 'subscribe',
-  events: [
-    'selectedTrack',
-    'playlist',
-    'browser'
-  ]
-});
-
-// Receive state updates
-appClient.on('state', (message) => {
-  feedbackManager.handleAppState(message);
-});
-```
-
-**Example state message**:
-```json
+// App Server state (source: "app", forwarded by Audio Engine)
 {
   "type": "state",
+  "source": "app",
   "selectedTrack": {
     "id": 1234,
     "title": "Track Title",
@@ -1500,8 +1473,6 @@ services:
 
     environment:
       - AUDIO_ENGINE_URL=ws://audio-engine:8080
-      - APP_SERVER_URL=ws://app-server:3000
-      - WEB_UI_URL=ws://web-ui:8081
       - LOG_LEVEL=info
       - DEBUG=false
 
@@ -1558,68 +1529,87 @@ Common issues and solutions:
 
 ### Controller Server → Audio Engine
 
-**Action messages sent to Audio Engine**:
+**Action messages sent to Audio Engine** (flat structure with routing metadata):
 
 ```json
 {
-  "type": "action",
+  "type": "transport" | "jog" | "effect" | "mixer" | "library",
+  "command": "play" | "pause" | "cue" | "scratch" | "bend" | "browse" | "loadTrack",
+  "target": "audio" | "app" | "ui",
+  "from": "DDJ-FLX4" | "Traktor S4" | "<device-name>",
   "priority": "critical" | "high" | "normal",
   "timestamp": 1729950000000,
-  "action": {
-    "type": "transport" | "jog" | "effect" | "mixer",
-    "deck": "A" | "B",
-    "command": "play" | "pause" | "cue" | "scratch" | "bend",
-    "value": <number>,
-    "delta": <number>  // For jog wheels
-  }
+  "deck": "A" | "B",
+  "value": <number>,
+  "delta": <number>,  // For jog wheels
+  "direction": "up" | "down"  // For encoders/browse
 }
 ```
+
+**Note**:
+- The `target` field tells Audio Engine where to route the message:
+  - `"audio"` - Process locally in Audio Engine
+  - `"app"` - Forward to App Server
+  - `"ui"` - Forward to Web UI
+- The `from` field identifies the physical device that sent the command
 
 **Examples**:
 
 ```json
-// Play button pressed
+// Play button pressed (target: audio)
 {
-  "type": "action",
+  "type": "transport",
+  "command": "play",
+  "deck": "A",
+  "target": "audio",
+  "from": "DDJ-FLX4",
   "priority": "high",
-  "action": {
-    "type": "transport",
-    "deck": "A",
-    "command": "play"
-  }
+  "timestamp": 1729950000000
 }
 
-// Jog wheel scratch
+// Jog wheel scratch (target: audio)
 {
-  "type": "action",
+  "type": "jog",
+  "command": "scratch",
+  "deck": "A",
+  "delta": -150,
+  "target": "audio",
+  "from": "DDJ-FLX4",
   "priority": "critical",
-  "action": {
-    "type": "jog",
-    "deck": "A",
-    "command": "scratch",
-    "delta": -150  // Negative = scratch backwards
-  }
+  "timestamp": 1729950000000
 }
 
-// Crossfader move
+// Browse library (target: app - forwarded to App Server)
 {
-  "type": "action",
+  "type": "library",
+  "command": "browse",
+  "direction": "down",
+  "target": "app",
+  "from": "DDJ-FLX4",
   "priority": "normal",
-  "action": {
-    "type": "mixer",
-    "command": "crossfader",
-    "value": 0.75  // 0.0 = full left, 1.0 = full right
-  }
+  "timestamp": 1729950000000
+}
+
+// Crossfader move (target: audio)
+{
+  "type": "mixer",
+  "command": "crossfader",
+  "value": 0.75,
+  "target": "audio",
+  "from": "DDJ-FLX4",
+  "priority": "normal",
+  "timestamp": 1729950000000
 }
 ```
 
 ### Audio Engine → Controller Server
 
-**State updates from Audio Engine**:
+**State updates from Audio Engine** (aggregated from all services):
 
 ```json
 {
   "type": "state",
+  "source": "audio" | "app" | "ui",
   "timestamp": 1729950000000,
   "deck": "A" | "B",
   "playback": {
@@ -1642,21 +1632,23 @@ Common issues and solutions:
 }
 ```
 
-### Controller Server → App Server
+**Note**: The `source` field indicates which service generated the state update. Audio Engine aggregates state from Audio Engine itself, App Server, and Web UI, then forwards to Controller Server.
 
-**Action messages sent to App Server**:
+### Library/App Actions (Routed via Audio Engine)
+
+**Action messages for App Server** (sent to Audio Engine with `target: "app"`):
 
 ```json
 {
-  "type": "action",
+  "type": "library" | "playlist",
+  "command": "browse" | "loadTrack" | "search",
+  "target": "app",
+  "from": "<device-name>",
   "priority": "normal",
-  "action": {
-    "type": "library" | "playlist",
-    "command": "browse" | "loadTrack" | "search",
-    "deck": "A" | "B",
-    "direction": "up" | "down",
-    "value": <any>
-  }
+  "timestamp": 1729950000000,
+  "deck": "A" | "B",
+  "direction": "up" | "down",
+  "value": <any>
 }
 ```
 
@@ -1665,32 +1657,35 @@ Common issues and solutions:
 ```json
 // Browse encoder turned
 {
-  "type": "action",
-  "action": {
-    "type": "library",
-    "command": "browse",
-    "direction": "down"
-  }
+  "type": "library",
+  "command": "browse",
+  "direction": "down",
+  "target": "app",
+  "from": "DDJ-FLX4",
+  "priority": "normal",
+  "timestamp": 1729950000000
 }
 
 // Load button pressed
 {
-  "type": "action",
-  "action": {
-    "type": "library",
-    "command": "loadTrack",
-    "deck": "A"
-  }
+  "type": "library",
+  "command": "loadTrack",
+  "deck": "A",
+  "target": "app",
+  "from": "DDJ-FLX4",
+  "priority": "normal",
+  "timestamp": 1729950000000
 }
 ```
 
-### App Server → Controller Server
+### App State Updates (Forwarded via Audio Engine)
 
-**State updates from App Server**:
+**State updates from App Server** (forwarded by Audio Engine with `source: "app"`):
 
 ```json
 {
   "type": "state",
+  "source": "app",
   "selectedTrack": {
     "id": 1234,
     "title": "Track Title",

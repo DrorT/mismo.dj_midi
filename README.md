@@ -87,7 +87,40 @@ Environment variables take precedence over config file values.
 
 ## MIDI Device Mapping
 
-Device mappings are defined in JSON files under [config/devices/](config/devices/). The server includes a generic MIDI mapping that works with most controllers.
+Device mappings are defined in JSON files under [config/devices/](config/devices/). The server includes a generic MIDI mapping that works with most controllers, plus a complete official mapping for the Pioneer DDJ-FLX4.
+
+### Supported Controllers
+
+#### Pioneer DDJ-FLX4 (✅ Complete Official Mapping)
+
+The DDJ-FLX4 has a **complete, production-ready mapping** based on Pioneer's official MIDI specification:
+
+- **80+ controls mapped**: Transport, loops, mixer, EQs, effects, browse, hot cues
+- **14-bit high-resolution**: All faders and knobs (16,384 steps)
+- **SHIFT combinations**: Extended functionality for every button
+- **MIDI Channels**: Uses 7 channels (0-2, 4-6) for organized control groups
+
+**Quick Start for DDJ-FLX4 Users**:
+
+```bash
+# Test your controller
+./test-flx4.sh
+
+# Or manually:
+node test/manual/listen-midi-events.js "DDJ-FLX4:DDJ-FLX4 MIDI 1 28:0"
+
+# Run the server
+DEBUG=true npm start
+```
+
+**Documentation**:
+- [DDJ-FLX4 Complete Mapping Guide](docs/DDJ_FLX4_COMPLETE_MAPPING.md) - Full control reference
+- [Quick Start Guide](QUICK_START.md) - Get started in 5 minutes
+- [14-bit MIDI Technical Guide](docs/14BIT_MIDI_SUPPORT.md) - How high-res works
+
+#### Generic MIDI Controllers
+
+A flexible generic mapping is provided for testing and basic controller support.
 
 ### Example Mapping
 
@@ -154,7 +187,8 @@ midi/
 │       └── config.js             # Configuration loader
 ├── config/
 │   ├── devices/
-│   │   └── generic-midi.json     # Generic MIDI mapping
+│   │   ├── generic-midi.json     # Generic MIDI mapping
+│   │   └── ddj-flx4.json         # Pioneer DDJ-FLX4 (complete)
 │   └── server.json               # Server configuration
 ├── test/                         # Tests (to be added)
 ├── docs/                         # Documentation

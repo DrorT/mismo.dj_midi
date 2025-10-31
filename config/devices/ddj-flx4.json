@@ -3,9 +3,370 @@
     "name": "Pioneer DDJ-FLX4",
     "protocol": "midi",
     "vendor": "Pioneer",
-    "product": "DDJ-FLX4"
+    "product": "DDJ-FLX4",
+    "version": "1.0",
+    "description": "Official MIDI mapping for Pioneer DDJ-FLX4 based on DDJ-FLX4_MIDI_message_List_E1.pdf"
   },
   "mappings": {
+    "_comment_transport": "=== TRANSPORT CONTROLS ===",
+
+    "play_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 11 },
+      "action": { "type": "transport", "command": "play", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "play_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 14 },
+      "action": { "type": "transport", "command": "stutter", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "note": "Play + SHIFT = Stutter"
+    },
+    "play_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 11 },
+      "action": { "type": "transport", "command": "play", "deck": "B" },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "play_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 14 },
+      "action": { "type": "transport", "command": "stutter", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "cue_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 12 },
+      "action": { "type": "transport", "command": "cue", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "cue_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 72 },
+      "action": { "type": "transport", "command": "cue_default", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "note": "Cue + SHIFT = Return to default cue point"
+    },
+    "cue_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 12 },
+      "action": { "type": "transport", "command": "cue", "deck": "B" },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "cue_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 72 },
+      "action": { "type": "transport", "command": "cue_default", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "_comment_sync": "=== SYNC / TEMPO ===",
+
+    "sync_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 88 },
+      "action": { "type": "transport", "command": "sync", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true },
+      "note": "BEAT SYNC sends MIDI on button release, not press"
+    },
+    "sync_a_long": {
+      "midi": { "type": "noteon", "channel": 0, "note": 92 },
+      "action": { "type": "transport", "command": "sync_master", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "note": "Long press to set as master"
+    },
+    "sync_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 96 },
+      "action": { "type": "transport", "command": "sync_off", "deck": "A" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "sync_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 88 },
+      "action": { "type": "transport", "command": "sync", "deck": "B" },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "sync_b_long": {
+      "midi": { "type": "noteon", "channel": 1, "note": 92 },
+      "action": { "type": "transport", "command": "sync_master", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "sync_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 96 },
+      "action": { "type": "transport", "command": "sync_off", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "tempo_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 0,
+        "highRes": true,
+        "lsb": 32
+      },
+      "action": { "type": "transport", "command": "tempo", "deck": "A" },
+      "target": "audio",
+      "priority": "high",
+      "note": "14-bit pitch fader: -100% to +100%"
+    },
+    "tempo_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 1,
+        "controller": 0,
+        "highRes": true,
+        "lsb": 32
+      },
+      "action": { "type": "transport", "command": "tempo", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "_comment_loop": "=== LOOP CONTROLS ===",
+
+    "loop_in_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 16 },
+      "action": { "type": "loop", "command": "in", "deck": "A" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_in_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 76 },
+      "action": { "type": "loop", "command": "reloop", "deck": "A" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_out_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 17 },
+      "action": { "type": "loop", "command": "out", "deck": "A" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_out_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 78 },
+      "action": { "type": "loop", "command": "exit", "deck": "A" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_4beat_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 77 },
+      "action": { "type": "loop", "command": "auto", "deck": "A", "beats": 4 },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_4beat_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 80 },
+      "action": { "type": "loop", "command": "auto", "deck": "A", "beats": 8 },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "loop_in_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 16 },
+      "action": { "type": "loop", "command": "in", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_in_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 76 },
+      "action": { "type": "loop", "command": "reloop", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_out_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 17 },
+      "action": { "type": "loop", "command": "out", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_out_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 78 },
+      "action": { "type": "loop", "command": "exit", "deck": "B" },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_4beat_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 77 },
+      "action": { "type": "loop", "command": "auto", "deck": "B", "beats": 4 },
+      "target": "audio",
+      "priority": "high"
+    },
+    "loop_4beat_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 80 },
+      "action": { "type": "loop", "command": "auto", "deck": "B", "beats": 8 },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "loop_call_prev_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 81 },
+      "action": { "type": "loop", "command": "call_prev", "deck": "A" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "loop_call_prev_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 62 },
+      "action": { "type": "loop", "command": "delete_prev", "deck": "A" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "loop_call_next_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 83 },
+      "action": { "type": "loop", "command": "call_next", "deck": "A" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "loop_call_next_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 61 },
+      "action": { "type": "loop", "command": "delete_next", "deck": "A" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "loop_call_prev_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 81 },
+      "action": { "type": "loop", "command": "call_prev", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "loop_call_prev_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 62 },
+      "action": { "type": "loop", "command": "delete_prev", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "loop_call_next_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 83 },
+      "action": { "type": "loop", "command": "call_next", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "loop_call_next_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 61 },
+      "action": { "type": "loop", "command": "delete_next", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "_comment_mixer": "=== MIXER CONTROLS ===",
+
+    "trim_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 4,
+        "highRes": true,
+        "lsb": 36
+      },
+      "action": { "type": "mixer", "command": "trim", "deck": "A" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit rotary control"
+    },
+    "trim_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 1,
+        "controller": 4,
+        "highRes": true,
+        "lsb": 36
+      },
+      "action": { "type": "mixer", "command": "trim", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_hi_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 7,
+        "highRes": true,
+        "lsb": 39
+      },
+      "action": { "type": "mixer", "command": "eq_high", "deck": "A" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit rotary control"
+    },
+    "eq_hi_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 1,
+        "controller": 7,
+        "highRes": true,
+        "lsb": 39
+      },
+      "action": { "type": "mixer", "command": "eq_high", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_mid_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 11,
+        "highRes": true,
+        "lsb": 43
+      },
+      "action": { "type": "mixer", "command": "eq_mid", "deck": "A" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit rotary control"
+    },
+    "eq_mid_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 1,
+        "controller": 11,
+        "highRes": true,
+        "lsb": 43
+      },
+      "action": { "type": "mixer", "command": "eq_mid", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "eq_low_a": {
+      "midi": {
+        "type": "cc",
+        "channel": 0,
+        "controller": 15,
+        "highRes": true,
+        "lsb": 47
+      },
+      "action": { "type": "mixer", "command": "eq_low", "deck": "A" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit rotary control"
+    },
+    "eq_low_b": {
+      "midi": {
+        "type": "cc",
+        "channel": 1,
+        "controller": 15,
+        "highRes": true,
+        "lsb": 47
+      },
+      "action": { "type": "mixer", "command": "eq_low", "deck": "B" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
     "volume_a": {
       "midi": {
         "type": "cc",
@@ -14,37 +375,506 @@
         "highRes": true,
         "lsb": 51
       },
-      "action": {
-        "type": "mixer",
-        "command": "volume",
-        "deck": "A"
-      },
+      "action": { "type": "mixer", "command": "volume", "deck": "A" },
       "target": "audio",
       "priority": "normal",
-      "note": "14-bit high-resolution fader (CC 19 MSB + CC 51 LSB)"
+      "note": "14-bit channel fader"
     },
     "volume_b": {
       "midi": {
         "type": "cc",
-        "channel": 0,
-        "controller": 51,
+        "channel": 1,
+        "controller": 19,
         "highRes": true,
-        "lsb": 83
+        "lsb": 51
       },
+      "action": { "type": "mixer", "command": "volume", "deck": "B" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit channel fader"
+    },
+
+    "crossfader": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 31,
+        "highRes": true,
+        "lsb": 63
+      },
+      "action": { "type": "mixer", "command": "crossfader" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit crossfader"
+    },
+
+    "headphone_mix": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 8,
+        "highRes": true,
+        "lsb": 40
+      },
+      "action": { "type": "mixer", "command": "headphone_mix" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit: Cue/Master mix"
+    },
+
+    "headphone_level": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 23,
+        "highRes": true,
+        "lsb": 55
+      },
+      "action": { "type": "mixer", "command": "headphone_level" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit headphone volume"
+    },
+
+    "master_level": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 24,
+        "highRes": true,
+        "lsb": 56
+      },
+      "action": { "type": "mixer", "command": "master_level" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit master output"
+    },
+
+    "mic_level": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 5,
+        "highRes": true,
+        "lsb": 37
+      },
+      "action": { "type": "mixer", "command": "mic_level" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit microphone level"
+    },
+
+    "ch_cue_a": {
+      "midi": { "type": "noteon", "channel": 0, "note": 84 },
+      "action": { "type": "mixer", "command": "headphone_cue", "deck": "A" },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": { "led": true }
+    },
+    "ch_cue_a_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 104 },
       "action": {
         "type": "mixer",
-        "command": "volume",
+        "command": "headphone_cue_split",
+        "deck": "A"
+      },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "ch_cue_b": {
+      "midi": { "type": "noteon", "channel": 1, "note": 84 },
+      "action": { "type": "mixer", "command": "headphone_cue", "deck": "B" },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": { "led": true }
+    },
+    "ch_cue_b_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 104 },
+      "action": {
+        "type": "mixer",
+        "command": "headphone_cue_split",
         "deck": "B"
       },
       "target": "audio",
+      "priority": "normal"
+    },
+
+    "master_cue": {
+      "midi": { "type": "noteon", "channel": 6, "note": 99 },
+      "action": { "type": "mixer", "command": "master_cue" },
+      "target": "audio",
       "priority": "normal",
-      "note": "14-bit high-resolution fader (CC 51 MSB + CC 83 LSB) - VERIFY THIS"
+      "feedback": { "led": true }
+    },
+    "master_cue_shift": {
+      "midi": { "type": "noteon", "channel": 6, "note": 120 },
+      "action": { "type": "mixer", "command": "master_cue_mono" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "_comment_effects": "=== EFFECTS ===",
+
+    "fx_level": {
+      "midi": {
+        "type": "cc",
+        "channel": 5,
+        "controller": 2,
+        "highRes": true,
+        "lsb": 34
+      },
+      "action": { "type": "effect", "command": "level" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit FX level/depth"
+    },
+
+    "fx_on_ch1": {
+      "midi": { "type": "noteon", "channel": 4, "note": 71 },
+      "action": { "type": "effect", "command": "on", "channel": 1 },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": { "led": true }
+    },
+    "fx_on_ch2": {
+      "midi": { "type": "noteon", "channel": 5, "note": 71 },
+      "action": { "type": "effect", "command": "on", "channel": 2 },
+      "target": "audio",
+      "priority": "normal",
+      "feedback": { "led": true }
+    },
+    "fx_on_both": {
+      "midi": { "type": "noteon", "channel": 4, "note": 71 },
+      "action": { "type": "effect", "command": "on", "channel": "both" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "When both CH1 and CH2 buttons pressed"
+    },
+
+    "fx_select_beat_prev": {
+      "midi": { "type": "noteon", "channel": 4, "note": 67 },
+      "action": { "type": "effect", "command": "beat_prev" },
+      "target": "audio",
+      "priority": "normal"
+    },
+    "fx_select_beat_next": {
+      "midi": { "type": "noteon", "channel": 5, "note": 67 },
+      "action": { "type": "effect", "command": "beat_next" },
+      "target": "audio",
+      "priority": "normal"
+    },
+
+    "smart_fader": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 12,
+        "highRes": true,
+        "lsb": 44
+      },
+      "action": { "type": "effect", "command": "smart_fader" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit Smart Fader control"
+    },
+
+    "smart_cfx": {
+      "midi": {
+        "type": "cc",
+        "channel": 6,
+        "controller": 13,
+        "highRes": true,
+        "lsb": 45
+      },
+      "action": { "type": "effect", "command": "smart_cfx" },
+      "target": "audio",
+      "priority": "normal",
+      "note": "14-bit Smart CFX control"
+    },
+
+    "_comment_browse": "=== LIBRARY / BROWSE ===",
+
+    "browse_encoder": {
+      "midi": { "type": "cc", "channel": 6, "controller": 64 },
+      "action": { "type": "library", "command": "browse" },
+      "target": "app",
+      "priority": "normal",
+      "note": "Relative encoder: >0x41 = clockwise, <0x3F = counterclockwise"
+    },
+    "browse_encoder_shift": {
+      "midi": { "type": "cc", "channel": 6, "controller": 100 },
+      "action": { "type": "library", "command": "browse_fast" },
+      "target": "app",
+      "priority": "normal",
+      "note": "SHIFT + Encoder for faster browsing"
+    },
+
+    "browse_press": {
+      "midi": { "type": "noteon", "channel": 6, "note": 65 },
+      "action": { "type": "library", "command": "browse_enter" },
+      "target": "app",
+      "priority": "normal"
+    },
+    "browse_press_shift": {
+      "midi": { "type": "noteon", "channel": 6, "note": 66 },
+      "action": { "type": "library", "command": "browse_back" },
+      "target": "app",
+      "priority": "normal"
+    },
+
+    "load_a": {
+      "midi": { "type": "noteon", "channel": 6, "note": 70 },
+      "action": { "type": "library", "command": "load", "deck": "A" },
+      "target": "app",
+      "priority": "normal"
+    },
+    "load_a_shift": {
+      "midi": { "type": "noteon", "channel": 6, "note": 104 },
+      "action": { "type": "library", "command": "eject", "deck": "A" },
+      "target": "app",
+      "priority": "normal"
+    },
+
+    "load_b": {
+      "midi": { "type": "noteon", "channel": 6, "note": 71 },
+      "action": { "type": "library", "command": "load", "deck": "B" },
+      "target": "app",
+      "priority": "normal"
+    },
+    "load_b_shift": {
+      "midi": { "type": "noteon", "channel": 6, "note": 122 },
+      "action": { "type": "library", "command": "eject", "deck": "B" },
+      "target": "app",
+      "priority": "normal"
+    },
+
+    "_comment_pads": "=== PERFORMANCE PADS (Hot Cue Mode - Deck 1) ===",
+
+    "hotcue_a_1": {
+      "midi": { "type": "noteon", "channel": 0, "note": 27 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "A",
+        "number": 1
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_a_1_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 105 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "A",
+        "number": 1
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "hotcue_a_2": {
+      "midi": { "type": "noteon", "channel": 0, "note": 30 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "A",
+        "number": 2
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_a_2_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 107 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "A",
+        "number": 2
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "hotcue_a_3": {
+      "midi": { "type": "noteon", "channel": 0, "note": 32 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "A",
+        "number": 3
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_a_3_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 109 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "A",
+        "number": 3
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "hotcue_a_4": {
+      "midi": { "type": "noteon", "channel": 0, "note": 34 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "A",
+        "number": 4
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_a_4_shift": {
+      "midi": { "type": "noteon", "channel": 0, "note": 111 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "A",
+        "number": 4
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "_comment_pads_b": "=== PERFORMANCE PADS (Hot Cue Mode - Deck 2) ===",
+
+    "hotcue_b_1": {
+      "midi": { "type": "noteon", "channel": 1, "note": 27 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "B",
+        "number": 1
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_b_1_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 105 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "B",
+        "number": 1
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "hotcue_b_2": {
+      "midi": { "type": "noteon", "channel": 1, "note": 30 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "B",
+        "number": 2
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_b_2_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 107 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "B",
+        "number": 2
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "hotcue_b_3": {
+      "midi": { "type": "noteon", "channel": 1, "note": 32 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "B",
+        "number": 3
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_b_3_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 109 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "B",
+        "number": 3
+      },
+      "target": "audio",
+      "priority": "high"
+    },
+
+    "hotcue_b_4": {
+      "midi": { "type": "noteon", "channel": 1, "note": 34 },
+      "action": {
+        "type": "hotcue",
+        "command": "activate",
+        "deck": "B",
+        "number": 4
+      },
+      "target": "audio",
+      "priority": "high",
+      "feedback": { "led": true }
+    },
+    "hotcue_b_4_shift": {
+      "midi": { "type": "noteon", "channel": 1, "note": 111 },
+      "action": {
+        "type": "hotcue",
+        "command": "delete",
+        "deck": "B",
+        "number": 4
+      },
+      "target": "audio",
+      "priority": "high"
     }
   },
-  "_notes": [
-    "This is a partial mapping for the Pioneer DDJ-FLX4",
-    "Volume faders use 14-bit MIDI for ultra-smooth control",
-    "Run 'node test/manual/listen-midi-events.js' to find other controls",
-    "The jog wheels use HID (not MIDI) - coming in Phase 2"
+
+  "_implementation_notes": [
+    "This mapping includes all MIDI controls from the official Pioneer DDJ-FLX4 specification",
+    "14-bit high-resolution controls: All faders, EQ knobs, Trim, FX Level, Smart Fader/CFX",
+    "Performance pads have multiple modes (Hot Cue, Pad FX, Beat Jump, Sampler, Keyboard, Beat Loop, Key Shift)",
+    "Only Hot Cue mode is mapped in this version - other pad modes use different MIDI channels (8-11)",
+    "Jog wheels are HID-based (not MIDI) and will be implemented in Phase 2",
+    "BEAT SYNC button sends MIDI on release, not on press (per official spec)",
+    "FX ON/OFF button: blinks on NOTE ON, lights solid on NOTE OFF",
+    "Channel fader start messages (Play/Cue when fader moves) are included in spec but not mapped yet",
+    "VU meter feedback uses channel level meter messages (separate from audio engine)",
+    "SHIFT combinations are mapped for extended functionality"
+  ],
+
+  "_midi_channels": {
+    "0": "Deck 1 (0x90) - Transport, loops, pads",
+    "1": "Deck 2 (0x91) - Transport, loops, pads",
+    "4": "FX Channel 1 (0x94)",
+    "5": "FX Channel 2 (0x95)",
+    "6": "Mixer (0x96) - Crossfader, master, browse, load",
+    "7": "Performance Pads - Pad FX 1 Mode (0x97)",
+    "8": "Performance Pads - Pad FX 2 Mode (0x98)",
+    "9": "Performance Pads - Beat Jump Mode (0x99)",
+    "10": "Performance Pads - Sampler Mode (0x9A)"
+  },
+
+  "_14bit_controls": [
+    "All channel faders use 14-bit resolution (16,384 steps)",
+    "MSB controllers: 0-31",
+    "LSB controllers: 32-63 (MSB + 32)",
+    "Range: 0x0000 (min) to 0x7F7F (max)",
+    "Automatically detected and combined by MIDIManager"
   ]
 }
